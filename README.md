@@ -54,4 +54,3 @@ www.openrec.tv##.loader-circle-one-more
 ## ライセンス
 
 このプロジェクトはMITライセンスの下で公開されています。
-# OPENRECTV_Screen_Comment_Scroller_Fix

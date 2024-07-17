@@ -49,7 +49,7 @@ www.openrec.tv##.loader-circle-one-more
 
 ## 貢献
 
-バグの報告や機能の提案は大歓迎です。[問題を報告](https://github.com/yossy17/OPENRECTV_Screen_Comment_Scroller_Fix/issues)または[プルリクエスト](https://github.com/yossy17/OPENRECTV_Screen_Comment_Scroller_Fix/pulls)を作成してください。
+バグの報告や機能の提案は大歓迎です。[問題を報告](https://github.com/yossy17/openrec-tv-screen-comment-scroller-fix/issues)または[プルリクエスト](https://github.com/yossy17/openrec-tv-screen-comment-scroller-fix/pulls)を作成してください。
 
 ## ライセンス
 

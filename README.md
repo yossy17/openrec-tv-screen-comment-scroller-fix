@@ -26,7 +26,9 @@
 
 ## +α
 
-[uBlock Origin](https://chromewebstore.google.com/detail/ublock-origin/cjpalhdlnbpafiamejdnhcphjbkeiagm?hl=ja)を設定することで、より快適に使えます。
+[![ublockorigin](https://img.shields.io/badge/uBlock Origin-800000.svg?logo=ublockorigin&style=for-the-badge)](https://chromewebstore.google.com/detail/ublock-origin/cjpalhdlnbpafiamejdnhcphjbkeiagm?hl=ja)
+
+を設定することで、より快適に使えます。
 
 設定方法は以下の記事に載っています。
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name                OPENREC.tv Screen Comment Scroller [Fix]
 // @description         OPENREC.tv のコメントをニコニコ風にスクロールさせます。
-// @version             1.0.0
+// @version             1.1
 // @author              Yos_sy
 // @match               https://www.openrec.tv/*
 // @namespace           http://tampermonkey.net/
@@ -20,10 +20,10 @@
 
   // カスタマイズ設定のデフォルト
   const defaultSettings = {
-    COLOR: "#ffffff", // コメント色
-    OCOLOR: "#000000", // コメント縁取り色
+    COLOR: "FFFFFF", // コメント色
+    OCOLOR: "000000", // コメント縁取り色
     OWIDTH: 0.1, // コメント縁取りの太さ(比率)
-    OPACITY: "0.5", // コメントの不透明度
+    OPACITY: 0.5, // コメントの不透明度
     MAXLINES: 15, // コメント最大行数
     LINEHEIGHT: 1.5, // コメント行高さ
     DURATION: 5, // スクロール秒数
@@ -42,23 +42,61 @@
 
   let settings = loadSettings();
 
+  // 色の検証と変換
+  const validateColor = (color) => {
+    color = color.replace(/^#/, "");
+    return /^[0-9A-Fa-f]{6}$/.test(color) ? `#${color}` : null;
+  };
+
   // 設定パネルの作成
   const createSettingsPanel = () => {
     const panel = document.createElement("div");
-    panel.id = `${settings.SCRIPTNAME}_settingsPanel`;
+    panel.id = `${SCRIPTNAME}_settingsPanel`;
     panel.style.position = "fixed";
     panel.style.top = "10px";
     panel.style.right = "10px";
-    panel.style.backgroundColor = "rgba(83, 80, 105, 0.8)";
+    panel.style.backgroundColor = "#535069CC";
     panel.style.color = "#ffffff";
     panel.style.padding = "20px";
     panel.style.borderRadius = "10px";
-    panel.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.5)";
+    panel.style.boxShadow = "0 0 10px #00000080";
     panel.style.zIndex = "9999";
     panel.style.display = "none";
     panel.style.fontFamily = "Arial, sans-serif";
     panel.style.maxWidth = "300px";
 
+    // ボタンスタイルの作成
+    const setButtonStyle = (button) => {
+      button.style.display = "block";
+      button.style.width = "100%";
+      button.style.padding = "8px";
+      button.style.backgroundColor = "#FF4C11";
+      button.style.color = "white";
+      button.style.border = "none";
+      button.style.borderRadius = "3px";
+      button.style.cursor = "pointer";
+    };
+
+    // リセットボタンの設定
+    const resetButton = document.createElement("button");
+    resetButton.textContent = "デフォルト値にリセット";
+    setButtonStyle(resetButton);
+    resetButton.style.marginBottom = "15px";
+    resetButton.onclick = () => {
+      if (
+        confirm(
+          "設定をデフォルト値にリセットしますか？この操作は元に戻せません。"
+        )
+      ) {
+        settings = { ...defaultSettings };
+        saveSettings(settings);
+        updateSettingsUI();
+        core.applySettings();
+      }
+    };
+    panel.appendChild(resetButton);
+
+    // 入力フィールドの設定
     const createInput = (labelText, key, type = "text") => {
       const container = document.createElement("div");
       container.style.marginBottom = "10px";
@@ -69,46 +107,58 @@
       label.style.marginBottom = "5px";
 
       const input = document.createElement("input");
+      input.id = `${SCRIPTNAME}_${key}`;
       input.type = type;
       input.value = settings[key];
       input.style.width = "100%";
       input.style.padding = "5px";
       input.style.boxSizing = "border-box";
-      input.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
-      input.style.border = "1px solid rgba(255, 255, 255, 0.3)";
+      input.style.backgroundColor = "#FFFFFF1A";
+      input.style.border = "1px solid #FFFFFF4D";
       input.style.borderRadius = "3px";
-      input.style.color = "#ffffff";
+      input.style.color = "#FFFFFF";
+      if (type === "number") {
+        input.step = "0.1";
+      }
       input.onchange = (e) => {
+        let value = e.target.value;
+        if (type === "color") {
+          value = validateColor(value);
+          if (!value) {
+            alert("無効な色形式です。6桁の16進数を使用してください。");
+            e.target.value = `#${settings[key]}`;
+            return;
+          }
+        }
         settings[key] =
-          type === "number" ? parseFloat(e.target.value) : e.target.value;
+          type === "number" ? parseFloat(value) : value.replace(/^#/, "");
         saveSettings(settings);
         core.applySettings();
+        updateSettingsUI();
       };
+
+      if (type === "color") {
+        input.value = `#${settings[key]}`;
+      }
 
       container.appendChild(label);
       container.appendChild(input);
       panel.appendChild(container);
     };
 
-    createInput("コメント色", "COLOR");
-    createInput("コメント縁取り色", "OCOLOR");
+    createInput("コメント色", "COLOR", "color");
+    createInput("コメント縁取り色", "OCOLOR", "color");
     createInput("縁取りの太さ", "OWIDTH", "number");
-    createInput("不透明度", "OPACITY");
+    createInput("不透明度", "OPACITY", "number");
     createInput("最大行数", "MAXLINES", "number");
     createInput("行高さ", "LINEHEIGHT", "number");
     createInput("スクロール秒数", "DURATION", "number");
     createInput("秒間コマ数", "FPS", "number");
 
+    // 閉じるボタンの設定
     const closeButton = document.createElement("button");
     closeButton.textContent = "閉じる";
-    closeButton.style.display = "block";
-    closeButton.style.width = "100%";
-    closeButton.style.padding = "8px";
-    closeButton.style.backgroundColor = "#FF4C11";
-    closeButton.style.color = "white";
-    closeButton.style.border = "none";
-    closeButton.style.borderRadius = "3px";
-    closeButton.style.cursor = "pointer";
+    setButtonStyle(closeButton);
     closeButton.style.marginTop = "15px";
     closeButton.onclick = () => {
       panel.style.display = "none";
@@ -118,11 +168,23 @@
     document.body.appendChild(panel);
   };
 
+  // 設定UIの更新
+  const updateSettingsUI = () => {
+    Object.keys(settings).forEach((key) => {
+      const input = document.getElementById(`${SCRIPTNAME}_${key}`);
+      if (input) {
+        if (input.type === "color") {
+          input.value = `#${settings[key]}`;
+        } else {
+          input.value = settings[key];
+        }
+      }
+    });
+  };
+
   // 設定パネルの表示切り替え
   const toggleSettingsPanel = () => {
-    const panel = document.getElementById(
-      `${settings.SCRIPTNAME}_settingsPanel`
-    );
+    const panel = document.getElementById(`${SCRIPTNAME}_settingsPanel`);
     panel.style.display = panel.style.display === "none" ? "block" : "none";
   };
 
@@ -172,7 +234,7 @@
   const core = {
     // 初期化
     initialize: () => {
-      console.log(settings.SCRIPTNAME, "initialize...");
+      console.log(SCRIPTNAME, "initialize...");
       screen = site.getScreen();
       board = site.getBoard();
       play = site.getPlay();
@@ -182,7 +244,7 @@
       }
 
       canvas = document.createElement("canvas");
-      canvas.id = settings.SCRIPTNAME;
+      canvas.id = SCRIPTNAME;
       screen.appendChild(canvas);
       context = canvas.getContext("2d");
 
@@ -206,17 +268,17 @@
       canvas.height = newHeight;
       fontsize = newHeight / settings.MAXLINES / settings.LINEHEIGHT;
       context.font = `bold ${fontsize}px sans-serif`;
-      context.fillStyle = settings.COLOR;
-      context.strokeStyle = settings.OCOLOR;
+      context.fillStyle = validateColor(settings.COLOR) || "#FFFFFF";
+      context.strokeStyle = validateColor(settings.OCOLOR) || "#000000";
       context.lineWidth = fontsize * settings.OWIDTH;
     },
 
     // スタイル追加
     addStyle: () => {
-      let canvas = document.querySelector(`canvas#${settings.SCRIPTNAME}`);
+      let canvas = document.querySelector(`canvas#${SCRIPTNAME}`);
       if (!canvas) {
         canvas = document.createElement("canvas");
-        canvas.id = `${settings.SCRIPTNAME}`;
+        canvas.id = SCRIPTNAME;
         document.body.appendChild(canvas);
       }
 

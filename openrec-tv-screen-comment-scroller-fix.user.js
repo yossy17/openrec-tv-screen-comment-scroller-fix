@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name                OPENREC.tv Screen Comment Scroller [Fix]
 // @description         OPENREC.tv のコメントをニコニコ風にスクロールさせます。
-// @version             1.1
+// @version             1.2
 // @author              Yos_sy
 // @match               https://www.openrec.tv/*
 // @namespace           http://tampermonkey.net/
@@ -293,13 +293,19 @@
 
     // コメントの監視
     listenComments: () => {
-      board.addEventListener("DOMNodeInserted", (e) => {
-        const comments = site.getComments(e.target);
-        if (!comments || !comments.length) return;
-        for (let comment of comments) {
-          core.attachComment(comment);
-        }
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === "childList") {
+            mutation.addedNodes.forEach((node) => {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                const comments = site.getComments(node);
+                comments.forEach((comment) => core.attachComment(comment));
+              }
+            });
+          }
+        });
       });
+      observer.observe(board, { childList: true, subtree: true });
     },
 
     // コメントの追加
